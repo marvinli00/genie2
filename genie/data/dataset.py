@@ -164,6 +164,9 @@ class GenieDataset(Dataset):
 			os.path.join(dataset_info['datadir'], f'{name}.pdb.gz')
 			for name in dataset_info['names']
 		]
+		filepaths.extend(os.path.join(dataset_info['datadir'], f'{name}.pdb') for name in dataset_info['names'])
+		#read all files that acutally exist
+		filepaths = [f for f in filepaths if os.path.exists(f)]
 		random.shuffle(filepaths)
 		return filepaths
 

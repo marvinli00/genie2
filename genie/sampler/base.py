@@ -10,7 +10,7 @@ from genie.utils.feat_utils import (
 	batchify_np_features,
 	debatchify_np_features
 )
-
+import math
 
 class BaseSampler(ABC):
 	"""
@@ -127,6 +127,21 @@ class BaseSampler(ABC):
 							[N] deprecated and set to all zeros.
 		"""
 		raise NotImplemented
+	def log_prob_standard_normal(self,tensor):
+		"""
+		Calculate log probability density of tensor elements under standard normal distribution.
+		
+		Args:
+			tensor (torch.Tensor): Input tensor
+			
+		Returns:
+			torch.Tensor: Log probability densities for each element
+		"""
+		# Standard normal log probability formula:
+		# log(p(x)) = -0.5 * (log(2π) + x²)
+		
+		log_prob = -0.5 * (math.log(2 * math.pi) + tensor ** 2)
+		return log_prob
 
 	def sample(self, params):
 		"""

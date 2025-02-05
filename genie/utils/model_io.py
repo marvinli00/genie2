@@ -160,7 +160,7 @@ def load_pretrained_model(rootdir, name, epoch):
 		rootdir,
 		name,
 		'checkpoints',
-		'epoch={}.ckpt'.format(epoch)
+		'epoch.{}.ckpt'.format(epoch)
 	)
 
 	# check

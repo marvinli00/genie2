@@ -1,0 +1,9 @@
+name try1
+
+numPairTransformLayers 5
+numEpoches 5
+batchSize 2
+motifProbability 1.0
+logEverySteps 1000
+checkpointEveryEpoches 5
+dataDirectory data/afdbreps_l-256_plddt_80/downloaded_pdbs

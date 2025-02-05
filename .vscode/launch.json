@@ -1,0 +1,51 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Genie Training",
+            "type": "python",
+            "request": "launch",
+            "program": "genie/train.py",
+            "args": [
+                "--devices", "1",
+                "--num_nodes", "1",
+                "--config", "runs/try1/configuration",                
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Genie Unconditional Inference",
+            "type": "python",
+            "request": "launch",
+            "program": "genie/sample_unconditional.py",
+            "args": [
+                "--name", "test001",
+                "--epoch", "40",
+                "--scale", "1",
+                "--outdir", "results/test001",          
+                "--num_samples", "1",     
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Genie Unconditional Motif",
+            "type": "python",
+            "request": "launch",
+            "program": "genie/sample_unconditional_motif.py",
+            "args": [
+                "--name", "test001",
+                "--epoch", "40",
+                "--scale", "1",
+                "--outdir", "results/test001",          
+                "--num_samples", "1",     
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
