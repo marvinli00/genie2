@@ -46,6 +46,21 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: Genie Unconditional Motif Rewrite",
+            "type": "python",
+            "request": "launch",
+            "program": "genie/sample_unconditional_motif copy.py",
+            "args": [
+                "--name", "test001",
+                "--epoch", "40",
+                "--scale", "1",
+                "--outdir", "results/test001",          
+                "--num_samples", "1",     
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

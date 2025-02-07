@@ -122,11 +122,15 @@ class SMCSampler(UnconditionalSampler):
         score = 0
         for i in range(motif_index_mask.shape[1]):
             motif_index_mask_i = motif_index_mask[:,i,:,:]
+            
+            #select the first placements for debugging
+            motif_index_mask_i = motif_index_mask_i[10:11,:,:]
+            
             motif_target_i = motif_target[i]
             
             ts_com_zero = torch.einsum('bkld,old->obkld',trans, motif_index_mask_i)
             ts_com_zero = ts_com_zero.masked_select(motif_index_mask_i[:,None,None,:])
-            ts_com_zero = ts_com_zero.reshape(motif_index_mask.shape[0],trans.shape[0],trans.shape[1],-1,3)
+            ts_com_zero = ts_com_zero.reshape(motif_index_mask_i.shape[0],trans.shape[0],trans.shape[1],-1,3)
             ts_com_zero = ts_com_zero - ts_com_zero.mean(dim=-2, keepdim=True) 
             
             #TODO: keep log prob
@@ -407,22 +411,28 @@ class SMCSampler(UnconditionalSampler):
             w_z = (1. - self.model.alphas[timesteps]) / self.model.sqrt_one_minus_alphas_cumprod[timesteps]
             trans_mean = (1. / self.model.sqrt_alphas[timesteps]).view(-1, 1, 1) * (ts.trans - w_z.view(-1, 1, 1) * z_pred)
             trans_mean = trans_mean * features['residue_mask'].unsqueeze(-1)
-            if timesteps[0] > 800:
-                p_tilde_k_t = self.twisting_function(self.reshape_trans_for_motif(trans_mean, params['num_samples'], params['num_particles'], reshape_for_diffusion_network = False), 
-                                                 motif_index_mask, motif_target, timesteps-1)
-                pk_plus_1 = p_tilde_k_t
-                trans_z = torch.randn_like(ts.trans)
-                trans_sigma = self.model.sqrt_betas[timesteps].view(-1, 1, 1)
-                trans_mean = trans_mean + params['scale'] * trans_sigma * trans_z
-                trans_mean = trans_mean * features['residue_mask'].unsqueeze(-1)
-                rots = compute_frenet_frames(
-                    trans_mean,
-                    features['chain_index'],
-                    features['residue_mask']
-                )
-                ts = T(rots.detach(), trans_mean)
+            trans_z = torch.randn_like(ts.trans)
+            trans_sigma = self.model.sqrt_betas[timesteps].view(-1, 1, 1)
+            trans_mean = trans_mean + params['scale'] * trans_sigma * trans_z
+            trans_mean = trans_mean * features['residue_mask'].unsqueeze(-1)
+            
+            
+            # if timesteps[0] > 800:
+            #     p_tilde_k_t = self.twisting_function(self.reshape_trans_for_motif(trans_mean, params['num_samples'], params['num_particles'], reshape_for_diffusion_network = False), 
+            #                                      motif_index_mask, motif_target, timesteps-1)
+            #     pk_plus_1 = p_tilde_k_t
+            #     trans_z = torch.randn_like(ts.trans)
+            #     trans_sigma = self.model.sqrt_betas[timesteps].view(-1, 1, 1)
+            #     trans_mean = trans_mean + params['scale'] * trans_sigma * trans_z
+            #     trans_mean = trans_mean * features['residue_mask'].unsqueeze(-1)
+            #     rots = compute_frenet_frames(
+            #         trans_mean,
+            #         features['chain_index'],
+            #         features['residue_mask']
+            #     )
+            #     ts = T(rots.detach(), trans_mean)
                 
-                continue
+            #     continue
             
             #Algorithm 1 conditional score approximation
             #set trans also to the same scale as the denoised_trans
@@ -497,7 +507,7 @@ class SMCSampler(UnconditionalSampler):
             if step == 1:
                 # Compute rotations
                 rots_mean = compute_frenet_frames(
-                    trans_mean,
+                    trans_next_step,
                     features['chain_index'],
                     features['residue_mask']
                 )
