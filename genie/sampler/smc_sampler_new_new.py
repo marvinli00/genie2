@@ -293,6 +293,9 @@ class SMCSampler(UnconditionalSampler):
             #TODO: keep log prob
             #motif_target_i is in the shape of (motif_target_i.shape[0], 3)
             #sum over except for the batch and particle dimensions
+            
+            
+            #calculate the log prob of p_tidle_given_x_t for each fixed location
             score_i = -torch.sum((ts_com_zero - motif_target_i[None,None,None,:]) ** 2, dim=(3,4))/(2*self.model.one_minus_alphas_cumprod[timesteps])
 
             self.run.log({f"distances_of_motif_{i}": ((ts_com_zero- motif_target_i[None,None,None,:])**2).mean()})
@@ -302,23 +305,7 @@ class SMCSampler(UnconditionalSampler):
             score = score + score_i
         #score = score / motif_index_mask.shape[1]
         
-        with torch.no_grad():
-            # Store all distributions over time
-            softmax_scores_over_time = []
-
-            # During training/inference:
-            softmax_score = torch.softmax(score, dim=0)[:,0,0]
-            softmax_scores_over_time.append(softmax_score.cpu().numpy())
-            self.softmax_tracking.append(softmax_score.cpu().numpy())
-            # Log as multiple lines to see the evolution
-            # self.run.log({
-            #     "softmax_distribution_over_time": wandb.plot.line_series(
-            #         xs=np.arange(score.shape[0]),  # indices
-            #         ys=softmax_scores_over_time,   # multiple distributions
-            #         title="Softmax Distribution Evolution",
-            #         xname="Index",
-            #     )
-            # })
+        #sum over the possible motif placements, change log prob to prob and sum over. take log of the sum at the end. 1/|M| becomes -log|M|
         score_log_proob_given_motif = torch.logsumexp(score, dim = 0) - torch.log(torch.tensor(score.shape[0], device=self.device))
         #twisting score log_prob
         score_log_proob_given_motif = score_log_proob_given_motif
