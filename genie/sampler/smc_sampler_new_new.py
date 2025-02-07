@@ -281,7 +281,7 @@ class SMCSampler(UnconditionalSampler):
             motif_index_mask_i = motif_index_mask[:,i,:,:]
             
             #select the first placements for debugging
-            motif_index_mask_i = motif_index_mask_i[10:11,:,:]
+            #motif_index_mask_i = motif_index_mask_i[10:11,:,:]
             
             motif_target_i = motif_target[i]
             
@@ -293,18 +293,35 @@ class SMCSampler(UnconditionalSampler):
             #TODO: keep log prob
             #motif_target_i is in the shape of (motif_target_i.shape[0], 3)
             #sum over except for the batch and particle dimensions
-            score_i = torch.sum((ts_com_zero - motif_target_i[None,None,None,:]) ** 2, dim=(3,4))
-            
+            score_i = -torch.sum((ts_com_zero - motif_target_i[None,None,None,:]) ** 2, dim=(3,4))/(2*self.model.one_minus_alphas_cumprod[timesteps])
+
             self.run.log({f"distances_of_motif_{i}": ((ts_com_zero- motif_target_i[None,None,None,:])**2).mean()})
 
 
             #TODO: change to log prob function later
             score = score + score_i
         #score = score / motif_index_mask.shape[1]
+        
+        with torch.no_grad():
+            # Store all distributions over time
+            softmax_scores_over_time = []
+
+            # During training/inference:
+            softmax_score = torch.softmax(score, dim=0)[:,0,0]
+            softmax_scores_over_time.append(softmax_score.cpu().numpy())
+            self.softmax_tracking.append(softmax_score.cpu().numpy())
+            # Log as multiple lines to see the evolution
+            # self.run.log({
+            #     "softmax_distribution_over_time": wandb.plot.line_series(
+            #         xs=np.arange(score.shape[0]),  # indices
+            #         ys=softmax_scores_over_time,   # multiple distributions
+            #         title="Softmax Distribution Evolution",
+            #         xname="Index",
+            #     )
+            # })
         score_log_proob_given_motif = torch.logsumexp(score, dim = 0) - torch.log(torch.tensor(score.shape[0], device=self.device))
-        #score_log_proob_given_motif = torch.log(score.exp().mean(dim = 0))
         #twisting score log_prob
-        score_log_proob_given_motif = -score_log_proob_given_motif/(2*self.model.one_minus_alphas_cumprod[timesteps])
+        score_log_proob_given_motif = score_log_proob_given_motif
         return score_log_proob_given_motif        
     def systematic_resampling(self, ts, features, motif_index_mask):
         #TODO: implement systematic resampling
@@ -366,6 +383,7 @@ class SMCSampler(UnconditionalSampler):
         
         self.run = wandb.init(project="protein_design", name="test001")
         self.run.log({"num_samples": params['num_samples']})
+        self.softmax_tracking = []
         number_of_particles = 2
         params["num_particles"] = number_of_particles
         
@@ -392,6 +410,9 @@ class SMCSampler(UnconditionalSampler):
         steps = reversed(np.arange(1, self.model.config.diffusion['n_timestep'] + 1))
 
         motif_target = self.load_motif_target()
+        
+        #use the first motif target for now
+        motif_target = [motif_target[0]]
         motif_target = [torch.from_numpy(i).to(self.device) for i in motif_target]        
         motif_index_mask = self.generate_motif_index_mask(motif_target, trans)
         
@@ -411,7 +432,7 @@ class SMCSampler(UnconditionalSampler):
 
         # Iterate
         for step in steps:
-
+            print(step)
             # Define current diffusion timestep
             timesteps = torch.Tensor([step] * params['num_samples']*params['num_particles']).int().to(self.device)
 
