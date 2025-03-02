@@ -254,14 +254,18 @@ class PairFeatureNet(nn.Module):
 
 		# Pairwise distance bin encoding
 		# Shape: [B, N, N, n_bin]
-		oh = nn.functional.one_hot(b, num_classes=len(v)).float()
+		#oh = nn.functional.one_hot(b, num_classes=len(v)).float()
+		
+		# define oh to be softmax of distance between d and v
+		alpha = 4.0
+		oh = nn.functional.softmax(-alpha*torch.abs(d.unsqueeze(-1) - v_reshaped), dim=-1)
 
 		# Pairwise mask
 		# Shape: [B, N, N]
 		pair_mask = mask.unsqueeze(1) * mask.unsqueeze(2)
 
 		return oh * pair_mask.unsqueeze(-1)
-
+		#return d.unsqueeze(-1).repeat(1,1,1,37)
 	def _encode_orientations(self, rots, mask):
 		"""
 		Encode pairwise relative orientations for a sequence of frames.

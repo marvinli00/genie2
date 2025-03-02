@@ -236,9 +236,10 @@ class T:
 
         return T(rots, trans)
 
+    # def stop_rot_gradient(self):
+    #     return T(self.rots.detach(), self.trans)
     def stop_rot_gradient(self):
-        return T(self.rots.detach(), self.trans)
-
+        return T(self.rots, self.trans)
     def scale_translation(self, factor):
         return T(self.rots, self.trans * factor)
 

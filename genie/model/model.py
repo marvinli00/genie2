@@ -185,4 +185,8 @@ class Denoiser(nn.Module):
 
 		return {
 			'z': trans - ts.trans,
+			's': s,
+			'p': p,
+			'states': states,
+			'ts': ts
 		}

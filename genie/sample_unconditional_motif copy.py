@@ -5,7 +5,7 @@ from tqdm import tqdm
 from genie.sampler.smc_sampler_new_new import SMCSampler
 from genie.utils.multiprocessor import MultiProcessor
 from genie.utils.model_io import load_pretrained_model
-
+import torch
 
 class UnconditionalRunner(MultiProcessor):
 	"""
@@ -162,6 +162,15 @@ if __name__ == '__main__':
 
 	# Parse arguments
 	args = parser.parse_args()
+	#do precise matrix multiplication 
+	torch.set_float32_matmul_precision('high')
+	torch.backends.cuda.matmul.allow_tf32 = False
+ 
+	#set the seed for torch and numpy
+	torch.manual_seed(42)
+	from numpy.random import seed
+	seed(42)
+ 
 
 	# Run
 	main(args)

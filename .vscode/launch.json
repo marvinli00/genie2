@@ -53,14 +53,14 @@
             "request": "launch",
             "program": "genie/sample_unconditional_motif copy.py",
             "args": [
-                "--name", "test001",
-                "--epoch", "40",
+                "--name", "test002",
+                "--epoch", "30",
                 "--scale", "1",
-                "--outdir", "results/test001",          
+                "--outdir", "results/test002",          
                 "--num_samples", "1",     
             ],
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
         }
     ]
 }

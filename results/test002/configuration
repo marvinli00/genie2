@@ -1,0 +1,8 @@
+name test002
+
+numPairTransformLayers 5
+numEpoches 40
+batchSize 1
+motifProbability 1.0
+logEverySteps 1000
+checkpointEveryEpoches 5
