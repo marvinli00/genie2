@@ -166,7 +166,7 @@ class SMCSampler(UnconditionalSampler):
         return create_empty_np_features([params['length']])
     def load_motif_target(self, path = "motif_target.pbd"):
         #motif_target = torch.load(path)
-        path = "/hai/scratch/mli89/protein_design/genie2/6E6R_long_motif.pdb"
+        path = "./6E6R_long_motif.pdb"
         #path = "/home/pc/Documents/protein_design/twisted_diffusion_sampler/protein_exp/motif_scaffolding/targets/5YUI_motif.pdb"
         
         
