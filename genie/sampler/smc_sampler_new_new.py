@@ -439,6 +439,7 @@ class SMCSampler(UnconditionalSampler):
             score_i = 0
             #for j in range(motif_index_mask_i.shape[0]):
             if True:
+                #For Debugging, only use the 15th placement. (Motif starts at index 14)
                 motif_index_mask_ij = motif_index_mask_i[15,:,0]
                 start, end = find_mask_true_range(motif_index_mask_ij)
                 predicted_x0_M = trans[:,:,start:end,:]
@@ -712,11 +713,7 @@ class SMCSampler(UnconditionalSampler):
         
         # Set model to evaluation mode
         self.model.eval()
-        ema = EMA(decay=0.9, zero_initialization=True)
 
-        
-
-        
         # Create a deep copy of features for visualization/debugging purposes
         features_copy = copy.deepcopy(features)
 
@@ -736,15 +733,9 @@ class SMCSampler(UnconditionalSampler):
             # Combine diffusion model noise prediction with the twisting function gradient
             # This creates a "twisted" score for guiding the sampling process
             
-            if step >= 980:
-                alpha = 10
-                grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1*alpha/(alpha+(grad_log_p_t_plus_1_given_x_t_plus_1.norm(dim=[1,2])[:,None,None]))
-                grad_log_p_t_plus_1_given_x_t_plus_1 = -grad_log_p_t_plus_1_given_x_t_plus_1
-            else:
-                alpha = 5
-                grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1*alpha/(alpha+(grad_log_p_t_plus_1_given_x_t_plus_1.norm(dim=[1,2])[:,None,None]))
-                grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1
-            
+            alpha = 10
+            grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1*alpha/(alpha+(grad_log_p_t_plus_1_given_x_t_plus_1.norm(dim=[1,2])[:,None,None]))
+                        
             
             twisting_score = -z_pred/self.model.sqrt_one_minus_alphas_cumprod[step+1] + grad_log_p_t_plus_1_given_x_t_plus_1
             
@@ -830,4 +821,5 @@ class SMCSampler(UnconditionalSampler):
         print(f"The max position of the softmax score is {max_position}")
         
         # Return the list of generated protein structures
+        return list_np_features
         return list_np_features
