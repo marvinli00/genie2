@@ -58,6 +58,13 @@ class DDPM(LightningModule, ABC):
 		self.sqrt_one_minus_alphas_cumprod_prev = torch.sqrt(1. - self.alphas_cumprod_prev)
 		self.sqrt_recip_alphas_cumprod = 1. / self.sqrt_alphas_cumprod
 		self.sqrt_recipm1_alphas_cumprod = torch.sqrt(1. / self.alphas_cumprod - 1)
+		self.posterior_mean_coef1 = self.betas * self.alphas_cumprod_prev / (1. - self.alphas_cumprod)
+		self.posterior_mean_coef2 = self.sqrt_alphas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+		self.posterior_variance = (
+            self.betas * (1.0 - self.alphas_cumprod_prev) /
+            (1.0 - self.alphas_cumprod)
+        )
+
 
 	@abstractmethod
 	def training_step(self, batch, batch_idx):

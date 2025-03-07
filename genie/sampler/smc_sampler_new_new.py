@@ -552,7 +552,25 @@ class SMCSampler(UnconditionalSampler):
         #var is in the shape of (batch_size, num_particles, sequence_length, 3)
         #reference_shape is in the shape of (batch_size, num_particles, sequence_length, 3)
         return mean + var.sqrt() * torch.randn_like(reference_shape)
-    
+    def get_xstart_var(self,alphas_cumprod_t, tausq_=0.12,var_type = 6):
+        
+        sigmasq_ = (1-alphas_cumprod_t) / alphas_cumprod_t
+        if var_type == 1:
+            return sigmasq_ 
+        elif var_type == 2: # pseudoinverse-guided paper https://openreview.net/forum?id=9_gsMA8MRKQ 
+            tausq_ = 1.0 
+            return (sigmasq_ * tausq_) / (sigmasq_ + tausq_)
+            #return (1 - alphas_cumprod_t) 
+        elif var_type == 5: 
+            tausq_ = 0.30 
+            return (sigmasq_ * tausq_) / (sigmasq_ + tausq_)
+        elif var_type == 3: # DPS paper https://arxiv.org/abs/2209.14687 
+            return None  
+        elif var_type == 4: # pseudoinverse-guided paper -- the actual implementation, see their Alg.1 
+            return beta_t  / np.sqrt(alphas_cumprod_t) 
+        elif var_type == 6: # freely specify tausq_
+            tausq_ = tausq_ 
+            return (sigmasq_ * tausq_) / (sigmasq_ + tausq_)       
     def check_gradient_accuracy(self, func, x, eps=5e-7, key = 'z'):
         """
         Check gradient accuracy using finite differences.
@@ -636,7 +654,7 @@ class SMCSampler(UnconditionalSampler):
         # Here it's set to 1, but could be increased for better exploration
         number_of_particles = 10
         # Set the total number of diffusion timesteps to 900
-        self.model.config.diffusion['n_timestep'] = 1000
+        self.model.config.diffusion['n_timestep'] = 900
         
         # Add number of particles to parameters dictionary
         params["num_particles"] = number_of_particles
@@ -733,8 +751,12 @@ class SMCSampler(UnconditionalSampler):
             # Combine diffusion model noise prediction with the twisting function gradient
             # This creates a "twisted" score for guiding the sampling process
             
-            alpha = 10
-            grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1*alpha/(alpha+(grad_log_p_t_plus_1_given_x_t_plus_1.norm(dim=[1,2])[:,None,None]))
+            
+            
+            pred_xstart_var = self.get_xstart_var(self.model.alphas_cumprod[step+1],var_type = 6)
+            grad_log_p_t_plus_1_given_x_t_plus_1 = 1./pred_xstart_var * grad_log_p_t_plus_1_given_x_t_plus_1
+            #alpha = 10
+            #grad_log_p_t_plus_1_given_x_t_plus_1 = grad_log_p_t_plus_1_given_x_t_plus_1*alpha/(alpha+(grad_log_p_t_plus_1_given_x_t_plus_1.norm(dim=[1,2])[:,None,None]))
                         
             
             twisting_score = -z_pred/self.model.sqrt_one_minus_alphas_cumprod[step+1] + grad_log_p_t_plus_1_given_x_t_plus_1

@@ -2,7 +2,7 @@ import argparse
 from tqdm import tqdm
 
 #from genie.sampler.unconditional import UnconditionalSampler
-from genie.sampler.smc_sampler_new_new import SMCSampler
+from genie.sampler.unconditional_smc import SMCSampler
 from genie.utils.multiprocessor import MultiProcessor
 from genie.utils.model_io import load_pretrained_model
 import torch
@@ -167,9 +167,12 @@ if __name__ == '__main__':
 	torch.backends.cuda.matmul.allow_tf32 = False
  
 	#set the seed for torch and numpy
-	torch.manual_seed(42)
+	torch.manual_seed(33)
 	from numpy.random import seed
-	seed(42)
+	seed(33)
+ 
+	#change defulat type to double
+	torch.set_default_dtype(torch.float32)
  
 
 	# Run

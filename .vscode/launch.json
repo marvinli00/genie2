@@ -57,7 +57,7 @@
                 "--epoch", "30",
                 "--scale", "1",
                 "--outdir", "results/test002",          
-                "--num_samples", "1",     
+                "--num_samples", "10",     
             ],
             "console": "integratedTerminal",
             "justMyCode": true,

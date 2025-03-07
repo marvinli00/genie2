@@ -209,7 +209,9 @@ class PairFeatureNet(nn.Module):
 
 		# Pairwise relative position encoding
 		# Shape: [B, N, N, n_bin]
-		oh = nn.functional.one_hot(d.long(), num_classes=self.relpos_n_bin).float()
+		#get torch default dtype
+		dtype = torch.get_default_dtype()
+		oh = nn.functional.one_hot(d.long(), num_classes=self.relpos_n_bin).to(dtype)
 
 		# Project to given single representation dimension
 		# Shape: [B, N, N, c_p]
