@@ -60,7 +60,7 @@ class UnconditionalRunner(MultiProcessor):
 		# Define
 		names = [
 			'rootdir', 'name', 'epoch',
-			'scale', 'outdir', 'num_samples', 'batch_size'
+			'scale', 'outdir', 'num_samples', 'batch_size', 'motif_index'
 		]
 
 		# Create constants
@@ -98,7 +98,7 @@ class UnconditionalRunner(MultiProcessor):
 				'length': 75,
 			}
 		]
-  
+		constants['num_samples']=1
 		# Iterate through all tasks
 		for task in tqdm(tasks, desc=device):
 
@@ -118,7 +118,8 @@ class UnconditionalRunner(MultiProcessor):
 					'num_samples': batch_size,
 					'outdir': constants['outdir'],
 					'prefix': str(task['length']),
-					'offset': constants['num_samples'] - num_samples
+					'offset': constants['num_samples'] - num_samples,
+					'motif_index': constants['motif_index']
 				}
 
 				# Sample
@@ -155,7 +156,7 @@ if __name__ == '__main__':
 	parser.add_argument('--min_length', type=int, help='Minimum sequence length', default=50)
 	parser.add_argument('--max_length', type=int, help='Maximum sequence length', default=256)
 	parser.add_argument('--length_step', type=int, help='Length step size', default=1)
-	
+	parser.add_argument('--motif_index', type=int, help='Index of motif', default=0)
 	# Define environment arguments
 	parser.add_argument('--num_devices', type=int, help='Number of GPU devices', default=1)
 	parser.add_argument('--sequential_order', action='store_true', help='Run in increasing order of length')
@@ -163,13 +164,12 @@ if __name__ == '__main__':
 	# Parse arguments
 	args = parser.parse_args()
 	#do precise matrix multiplication 
-	torch.set_float32_matmul_precision('high')
-	torch.backends.cuda.matmul.allow_tf32 = False
- 
+	#torch.set_float32_matmul_precision('high')
+	#torch.backends.cuda.matmul.allow_tf32 = False
 	#set the seed for torch and numpy
-	torch.manual_seed(33)
-	from numpy.random import seed
-	seed(33)
+	#torch.manual_seed(33)
+	#from numpy.random import seed
+	#seed(33)
  
 	#change defulat type to double
 	torch.set_default_dtype(torch.float32)

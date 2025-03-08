@@ -58,6 +58,7 @@
                 "--scale", "1",
                 "--outdir", "results/test002",          
                 "--num_samples", "10",     
+                "--motif_index","0"
             ],
             "console": "integratedTerminal",
             "justMyCode": true,

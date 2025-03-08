@@ -311,37 +311,37 @@ class SMCSampler(UnconditionalSampler):
         # Initialize the total score to 0
         score = 0
         normalized_variance = self.get_xstart_var(self.model.alphas_cumprod[timesteps], var_type = 6, tausq_ = 0.012)
-        # Loop through each motif (supporting multiple motifs)
-        for i in range(motif_index_mask.shape[1]):
-            motif_index_mask_i = motif_index_mask[:,i,:,:]
-            
-            # For debugging, select only a specific subset of placements
-            # Here, it selects only the 15th placement position for focused evaluation
-            #motif_index_mask_i = motif_index_mask_i[15:16,:,:]
-            
-            # Get the target coordinates for this specific motif
-            motif_target_i = motif_target[i]
-            
-            ts_com_zero = torch.einsum('old,bkld->obkld', motif_index_mask_i, trans)
-            
-            ts_com_zero = ts_com_zero.masked_select(motif_index_mask_i[:,None,None,:])
-            ts_com_zero = ts_com_zero.reshape(motif_index_mask_i.shape[0], trans.shape[0], trans.shape[1], -1, 3)
-            ts_com_zero = ts_com_zero - ts_com_zero.mean(dim=-2, keepdim=True)
-            
-            #Gaussian log probability: -||x-μ||²/(2σ²)
-            score_i = -torch.sum((ts_com_zero - motif_target_i[None,None,None,:]) ** 2, dim=(3,4)) / (2*normalized_variance)
 
-            # Log the mean squared distance for monitoring/debugging
-            self.run.log({f"distances_of_motif_{i}": ((ts_com_zero - motif_target_i[None,None,None,:])**2).mean()})
+        motif_index_mask = motif_index_mask      
+        ts_com_zero = torch.einsum('oild,bkld->obikld', motif_index_mask, trans)
+        ts_com_zero = ts_com_zero.masked_select(motif_index_mask[:,None,:,None,:])
+        ts_com_zero = ts_com_zero.reshape(motif_index_mask.shape[0], trans.shape[0], trans.shape[1],-1, 3)
+        ts_com_zero = ts_com_zero - ts_com_zero.mean(dim=-2, keepdim=True)
+        
+        
+        motif_target_cat = torch.cat(motif_target, dim = 0)
+        #Gaussian log probability: -||x-μ||²/(2σ²)
+        score_i = -torch.sum((ts_com_zero - motif_target_cat[None,None,None,:]) ** 2, dim=(3,4)) / (2*normalized_variance)
 
-            # Add this motif's score to the total score
-            # Multiple motifs' scores are summed, giving equal weight to each motif
-            score = score + score_i
+        # Log the mean squared distance for monitoring/debugging
+        self.run.log({f"distances_of_motif": ((ts_com_zero - motif_target_cat[None,None,None,:])**2).mean()})
+        #write to a
+        # Add this motif's score to the total score
+        # Multiple motifs' scores are summed, giving equal weight to each motif
+        score = score + score_i
         score_log_proob_given_motif = torch.logsumexp(score, dim=0) - torch.log(torch.tensor(score.shape[0], device=self.device))
         
-        # score_log_prob_given_motif is (1, P)
+        with open(f"motif_location.txt", "w") as f:
+            motif_index_from_mask = score[:,0,0].argmax()
+            #iterate over different motif segments
+            for i in range(motif_index_mask.shape[1]):
+                mask_slice = motif_index_mask[motif_index_from_mask,i,:,0]
+                #find first and last True location of the motif
+                motif_index_start = mask_slice.nonzero().squeeze(-1)[0].item()
+                # Find the last True value in the mask (end of motif)
+                motif_index_end = mask_slice.nonzero().squeeze(-1)[-1].item()
+                f.write(f"{motif_index_start}\t{motif_index_end}\n")
         
-        # Return the final log probability score
         return score_log_proob_given_motif.unsqueeze(0)
     
     def compute_ess_softmax(self,log_weights):
@@ -400,7 +400,7 @@ class SMCSampler(UnconditionalSampler):
         
         params['num_samples'] = 4
         self.run.log({"num_samples": params['num_samples']})
-        motif_target = load_motif_target(index = 26)
+        motif_target = load_motif_target(index = params['motif_index'])
         #motif_target = [motif_target[0]]
         motif_target = [torch.from_numpy(i).to(self.device) for i in motif_target]
         self.selected_motif_location_index = None
@@ -459,9 +459,10 @@ class SMCSampler(UnconditionalSampler):
                     if features[key].dtype == torch.float32:
                         features[key] = features[key].to(torch_default_dtype)
         change_features_to_double(features)
-        
+        self.step = 1000
         # Iterate
         for step in steps:
+            self.step = step
             ts.trans.requires_grad = True
             # Define current diffusion timestep
             timesteps = torch.Tensor([step] * params['num_samples']).int().to(self.device)
@@ -578,4 +579,5 @@ class SMCSampler(UnconditionalSampler):
         np_features = convert_tensor_features_to_numpy(features)
         list_np_features = debatchify_np_features(np_features)
         self.run.finish()
+        params['num_samples'] = 1
         return list_np_features
