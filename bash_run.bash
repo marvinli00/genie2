@@ -11,9 +11,10 @@ for outer in {0..9}; do
     # Inner loop from 1 to 10
     for inner in {1..10}; do
         # Run the Python command with inner loop index
-        python genie/sample_unconditional_motif\ copy.py --name test002 --epoch 30 --scale 1 --outdir results/test002 --num_samples 10 --motif_index $inner
+        python genie/sample_unconditional_motif\ copy.py --name test002 --epoch 30 --scale 1 --outdir results/test002 --num_samples 10 --motif_index $outer
         
         # Copy the generated file to the destination
         cp /hai/scratch/mli89/protein_design/genie2/results/test002/pdbs/75_0.pdb ./protein_generated/$outer/$inner.pdb
+        cp /hai/scratch/mli89/protein_design/genie2/motif_location.txt ./protein_generated/$outer/$inner.motif_location.txt
     done
 done

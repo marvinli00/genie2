@@ -400,11 +400,12 @@ class SMCSampler(UnconditionalSampler):
         
         params['num_samples'] = 4
         self.run.log({"num_samples": params['num_samples']})
-        motif_target = load_motif_target(index = params['motif_index'])
+        motif_target, protein_length= load_motif_target(index = params['motif_index'])
         #motif_target = [motif_target[0]]
         motif_target = [torch.from_numpy(i).to(self.device) for i in motif_target]
         self.selected_motif_location_index = None
-    
+        
+        params['length'] = protein_length
         # Create features
         features = convert_np_features_to_tensor(
             batchify_np_features([

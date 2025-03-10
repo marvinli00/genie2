@@ -140,6 +140,15 @@ def load_motif_target(index, folder_path = "/hai/scratch/mli89/protein_design/Mo
     ca_filter = lambda line: line.startswith("ATOM") and line[12:16].strip() == "CA"
     coords = process_pdb(path, atom_filter=ca_filter, group_by="ter")
     coords_flatten = process_pdb(path, atom_filter=ca_filter, group_by="none")
+    print(files)
+    print(index)
+    #read the third line of pdb file
+    with open(path, 'r') as pdb_file:
+        for i, line in enumerate(pdb_file):
+            if i == 2:
+                #read the line and seperated by :
+                protein_length = int(line.split(':')[1].strip())
+                break
     
     #find center of mass from coords_filtered
     mean_of_coordinates = lambda x, name_of_coordinate: np.mean([i[name_of_coordinate] for i in x])
@@ -171,4 +180,4 @@ def load_motif_target(index, folder_path = "/hai/scratch/mli89/protein_design/Mo
             coords_to_numpy.append(np.stack(coords_segment, axis = 0))
         #motif_target.append(coords)
 
-    return coords_to_numpy
+    return coords_to_numpy, protein_length
